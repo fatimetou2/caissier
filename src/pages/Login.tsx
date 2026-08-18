@@ -1,59 +1,29 @@
 import { useState, type FormEvent } from "react";
+import { ADMIN_EMAIL } from "../auth/constants";
 import { useAuth } from "../auth/AuthContext";
 import { LanguageSwitch } from "../components/LanguageSwitch";
 import { useLanguage } from "../i18n/LanguageContext";
 
 export function Login() {
   const { t } = useLanguage();
-  const { signIn, signUp } = useAuth();
-  const [email, setEmail] = useState("");
+  const { signIn } = useAuth();
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
-  const [busy, setBusy] = useState<"login" | "signup" | null>(null);
+  const [busy, setBusy] = useState(false);
 
   async function handleLogin(event: FormEvent) {
     event.preventDefault();
-    if (!email.trim()) {
-      setError(t("emailRequired"));
-      return;
-    }
     if (password.length < 6) {
       setError(t("passwordMin"));
       return;
     }
-    setBusy("login");
+    setBusy(true);
     setError("");
-    setMessage("");
     try {
-      await signIn(email.trim(), password);
+      await signIn(ADMIN_EMAIL, password);
     } catch {
       setError(t("loginFailed"));
-      setBusy(null);
-    }
-  }
-
-  async function handleSignup() {
-    if (!email.trim()) {
-      setError(t("emailRequired"));
-      return;
-    }
-    if (password.length < 6) {
-      setError(t("passwordMin"));
-      return;
-    }
-    setBusy("signup");
-    setError("");
-    setMessage("");
-    try {
-      const result = await signUp(email.trim(), password);
-      if (result === "confirm") {
-        setMessage(t("confirmEmail"));
-        setBusy(null);
-      }
-    } catch {
-      setError(t("signupFailed"));
-      setBusy(null);
+      setBusy(false);
     }
   }
 
@@ -76,11 +46,9 @@ export function Login() {
           {t("email")}
           <input
             type="email"
-            autoComplete="email"
-            required
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            className="rounded-lg border border-ledger-line px-3 py-2 font-normal"
+            value={ADMIN_EMAIL}
+            readOnly
+            className="rounded-lg border border-ledger-line bg-ledger-bg px-3 py-2 font-normal"
             dir="ltr"
           />
         </label>
@@ -103,26 +71,13 @@ export function Login() {
             {error}
           </p>
         )}
-        {message && (
-          <p className="mt-4 rounded-lg bg-ledger-in-soft px-3 py-2 text-sm font-semibold text-ledger-in">
-            {message}
-          </p>
-        )}
 
         <button
           type="submit"
-          disabled={busy !== null}
+          disabled={busy}
           className="mt-5 w-full rounded-lg bg-ledger-ink px-4 py-3 font-bold text-white disabled:opacity-60"
         >
-          {busy === "login" ? t("loggingIn") : t("login")}
-        </button>
-        <button
-          type="button"
-          disabled={busy !== null}
-          onClick={() => void handleSignup()}
-          className="mt-2 w-full rounded-lg border border-ledger-line px-4 py-3 font-semibold text-ledger-ink disabled:opacity-60"
-        >
-          {busy === "signup" ? t("creatingAccount") : t("signup")}
+          {busy ? t("loggingIn") : t("login")}
         </button>
       </form>
     </main>

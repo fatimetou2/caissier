@@ -8,13 +8,13 @@ import {
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
+import { ADMIN_EMAIL } from "./constants";
 
 interface AuthContextValue {
   user: User | null;
   session: Session | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<"session" | "confirm">;
   signOut: () => Promise<void>;
 }
 
@@ -25,12 +25,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    void supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
+    async function loadSession() {
+      const { data } = await supabase.auth.getSession();
+      const next = data.session;
+      if (next?.user.email?.toLowerCase() !== ADMIN_EMAIL) {
+        if (next) await supabase.auth.signOut();
+        setSession(null);
+      } else {
+        setSession(next);
+      }
       setLoading(false);
-    });
+    }
+
+    void loadSession();
 
     const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      if (nextSession?.user.email?.toLowerCase() !== ADMIN_EMAIL) {
+        setSession(null);
+        return;
+      }
       setSession(nextSession);
     });
 
@@ -43,16 +56,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session,
       loading,
       signIn: async (email, password) => {
+        if (email.trim().toLowerCase() !== ADMIN_EMAIL) {
+          throw new Error("unauthorized");
+        }
         const { error } = await supabase.auth.signInWithPassword({
-          email,
+          email: ADMIN_EMAIL,
           password,
         });
         if (error) throw error;
-      },
-      signUp: async (email, password) => {
-        const { data, error } = await supabase.auth.signUp({ email, password });
-        if (error) throw error;
-        return data.session ? "session" : "confirm";
       },
       signOut: async () => {
         const { error } = await supabase.auth.signOut();

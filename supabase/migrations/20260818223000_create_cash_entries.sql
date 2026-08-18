@@ -56,13 +56,3 @@ with check (true);
 create policy "cash_entries_delete_all"
 on public.cash_entries for delete
 using (true);
-
-insert into public.cash_entries (date, type, amount)
-select v.date, v.type, v.amount
-from (
-  values
-    ('2026-08-01'::date, 'in', 100000),
-    ('2026-08-03'::date, 'out', 20000),
-    ('2026-08-05'::date, 'in', 50000)
-) as v(date, type, amount)
-where not exists (select 1 from public.cash_entries);

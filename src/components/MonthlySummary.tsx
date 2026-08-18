@@ -104,23 +104,23 @@ export function MonthlySummary({ entries, onExported }: MonthlySummaryProps) {
         </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-3">
-        <article className="rounded-xl border border-ledger-line bg-ledger-paper p-5 shadow-sm">
-          <p className="text-sm font-semibold text-ledger-in">{t("totalIn")}</p>
-          <p className="mt-2 text-2xl font-extrabold text-ledger-in" dir="ltr">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        <article className="rounded-xl border border-ledger-line bg-ledger-paper p-2 shadow-sm sm:p-5">
+          <p className="text-[11px] font-semibold leading-tight text-ledger-in sm:text-sm">{t("totalIn")}</p>
+          <p className="mt-1 break-all text-sm font-extrabold text-ledger-in sm:mt-2 sm:text-2xl" dir="ltr">
             {formatMoney(totals.income)}
           </p>
         </article>
-        <article className="rounded-xl border border-ledger-line bg-ledger-paper p-5 shadow-sm">
-          <p className="text-sm font-semibold text-ledger-out">{t("totalOut")}</p>
-          <p className="mt-2 text-2xl font-extrabold text-ledger-out" dir="ltr">
+        <article className="rounded-xl border border-ledger-line bg-ledger-paper p-2 shadow-sm sm:p-5">
+          <p className="text-[11px] font-semibold leading-tight text-ledger-out sm:text-sm">{t("totalOut")}</p>
+          <p className="mt-1 break-all text-sm font-extrabold text-ledger-out sm:mt-2 sm:text-2xl" dir="ltr">
             {formatMoney(totals.expense)}
           </p>
         </article>
-        <article className="rounded-xl border border-ledger-line bg-ledger-paper p-5 shadow-sm">
-          <p className="text-sm font-semibold text-ledger-muted">{t("netMovement")}</p>
+        <article className="rounded-xl border border-ledger-line bg-ledger-paper p-2 shadow-sm sm:p-5">
+          <p className="text-[11px] font-semibold leading-tight text-ledger-muted sm:text-sm">{t("netMovement")}</p>
           <p
-            className={`mt-2 text-2xl font-extrabold ${
+            className={`mt-1 break-all text-sm font-extrabold sm:mt-2 sm:text-2xl ${
               totals.net >= 0 ? "text-ledger-in" : "text-ledger-out"
             }`}
             dir="ltr"

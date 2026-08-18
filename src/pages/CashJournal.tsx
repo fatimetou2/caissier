@@ -3,7 +3,6 @@ import { BalanceCard } from "../components/BalanceCard";
 import { CancelDialog } from "../components/CancelDialog";
 import { DailyNavigation } from "../components/DailyNavigation";
 import { DeleteDialog } from "../components/DeleteDialog";
-import { EntryCard } from "../components/EntryCard";
 import { EntryForm } from "../components/EntryForm";
 import { EntryTable } from "../components/EntryTable";
 import { Header } from "../components/Header";
@@ -201,7 +200,7 @@ export function CashJournal() {
     <div className="min-h-screen">
       <Header currentView={view} onChangeView={setView} />
 
-      <main className="mx-auto grid max-w-5xl gap-4 px-4 py-6">
+      <main className="mx-auto grid max-w-5xl gap-3 px-3 py-4 sm:gap-4 sm:px-4 sm:py-6">
         {message && (
           <p className="rounded-lg bg-ledger-in-soft px-4 py-3 text-sm font-semibold text-ledger-in">
             {message}
@@ -292,27 +291,13 @@ export function CashJournal() {
                 </button>
               </div>
             ) : (
-              <>
-                <EntryTable
-                  entries={visibleDayEntries}
-                  runningBalances={runningBalances}
-                  onEdit={openEditForm}
-                  onCancelEntry={setCancellingEntry}
-                  onDeleteEntry={setDeletingEntry}
-                />
-                <div className="grid gap-3 md:hidden">
-                  {visibleDayEntries.map((entry) => (
-                    <EntryCard
-                      key={entry.id}
-                      entry={entry}
-                      runningBalance={runningBalances.get(entry.id) ?? 0}
-                      onEdit={openEditForm}
-                      onCancelEntry={setCancellingEntry}
-                      onDeleteEntry={setDeletingEntry}
-                    />
-                  ))}
-                </div>
-              </>
+              <EntryTable
+                entries={visibleDayEntries}
+                runningBalances={runningBalances}
+                onEdit={openEditForm}
+                onCancelEntry={setCancellingEntry}
+                onDeleteEntry={setDeletingEntry}
+              />
             )}
           </>
         )}

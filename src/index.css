@@ -13,6 +13,9 @@ body {
   background: #f4f4f2;
   color: #1f2937;
   font-family: Cairo, Tahoma, sans-serif;
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 input,
@@ -20,4 +23,11 @@ select,
 textarea,
 button {
   font-family: inherit;
+  font-size: 16px;
+}
+
+input,
+select,
+textarea {
+  max-width: 100%;
 }

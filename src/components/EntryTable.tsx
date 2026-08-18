@@ -26,8 +26,8 @@ export function EntryTable({
   const { t } = useLanguage();
 
   return (
-    <div className="hidden overflow-hidden rounded-xl border border-ledger-line bg-ledger-paper shadow-sm md:block">
-      <table className="w-full text-start">
+    <div className="overflow-x-auto rounded-xl border border-ledger-line bg-ledger-paper shadow-sm">
+      <table className="w-full min-w-[760px] text-start text-sm">
         <thead className="bg-ledger-bg text-sm text-ledger-muted">
           <tr>
             <th className="px-4 py-3 font-semibold">{t("date")}</th>

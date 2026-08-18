@@ -1,7 +1,8 @@
+import { useLanguage } from "../i18n/LanguageContext";
 import type { CashEntry } from "../types/cashEntry";
 import { signedAmount } from "../utils/calculations";
 import {
-  formatArabicDate,
+  formatLongDate,
   formatMoney,
   formatSignedAmount,
 } from "../utils/formatters";
@@ -19,6 +20,7 @@ export function EntryCard({
   onEdit,
   onDelete,
 }: EntryCardProps) {
+  const { t, language } = useLanguage();
   const isIn = entry.type === "in";
 
   return (
@@ -26,14 +28,14 @@ export function EntryCard({
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-sm text-ledger-muted">
-            {formatArabicDate(entry.date)}
+            {formatLongDate(entry.date, language)}
           </p>
           <p
             className={`mt-1 font-bold ${
               isIn ? "text-ledger-in" : "text-ledger-out"
             }`}
           >
-            {isIn ? "وارد" : "صادر"}
+            {isIn ? t("incoming") : t("outgoing")}
           </p>
         </div>
         <p
@@ -48,21 +50,21 @@ export function EntryCard({
 
       <dl className="mt-4 grid gap-1 text-sm">
         <div className="flex justify-between gap-3">
-          <dt className="text-ledger-muted">الطرف</dt>
+          <dt className="text-ledger-muted">{t("party")}</dt>
           <dd className="font-semibold text-ledger-ink">{entry.party || "—"}</dd>
         </div>
         <div className="flex justify-between gap-3">
-          <dt className="text-ledger-muted">السبب</dt>
+          <dt className="text-ledger-muted">{t("reason")}</dt>
           <dd className="font-semibold text-ledger-ink">{entry.reason || "—"}</dd>
         </div>
         {entry.notes && (
           <div className="flex justify-between gap-3">
-            <dt className="text-ledger-muted">الملاحظات</dt>
+            <dt className="text-ledger-muted">{t("notes")}</dt>
             <dd className="font-semibold text-ledger-ink">{entry.notes}</dd>
           </div>
         )}
         <div className="flex justify-between gap-3">
-          <dt className="text-ledger-muted">الرصيد</dt>
+          <dt className="text-ledger-muted">{t("balance")}</dt>
           <dd className="font-bold text-ledger-ink" dir="ltr">
             {formatMoney(runningBalance)}
           </dd>
@@ -75,14 +77,14 @@ export function EntryCard({
           onClick={() => onEdit(entry)}
           className="flex-1 rounded-lg border border-ledger-line px-3 py-2 text-sm font-semibold"
         >
-          تعديل
+          {t("edit")}
         </button>
         <button
           type="button"
           onClick={() => onDelete(entry)}
           className="flex-1 rounded-lg border border-ledger-out-soft bg-ledger-out-soft px-3 py-2 text-sm font-semibold text-ledger-out"
         >
-          حذف
+          {t("delete")}
         </button>
       </div>
     </article>

@@ -1,22 +1,27 @@
 import { useMemo, useState } from "react";
+import { useLanguage } from "../i18n/LanguageContext";
 import type { CashEntry } from "../types/cashEntry";
 import { calculateDayTotals, filterByMonth } from "../utils/calculations";
+import { exportEntriesToExcel } from "../utils/excelExport";
 import {
-  ARABIC_MONTHS,
-  formatArabicMonth,
+  formatMonthTitle,
   formatMoney,
+  monthNames,
   parseISODate,
   todayISO,
 } from "../utils/formatters";
 
 interface MonthlySummaryProps {
   entries: CashEntry[];
+  onExported: () => void;
 }
 
-export function MonthlySummary({ entries }: MonthlySummaryProps) {
+export function MonthlySummary({ entries, onExported }: MonthlySummaryProps) {
+  const { t, language } = useLanguage();
   const today = parseISODate(todayISO());
   const [year, setYear] = useState(today.year);
   const [month, setMonth] = useState(today.month);
+  const names = monthNames(language);
 
   const monthEntries = useMemo(
     () => filterByMonth(entries, year, month),
@@ -35,20 +40,39 @@ export function MonthlySummary({ entries }: MonthlySummaryProps) {
     return Array.from(set).sort((a, b) => b - a);
   }, [entries, today.year]);
 
+  function handleExport() {
+    exportEntriesToExcel(
+      monthEntries,
+      {
+        date: t("date"),
+        type: t("type"),
+        amount: t("amount"),
+        party: t("party"),
+        reason: t("reason"),
+        notes: t("notes"),
+        runningBalance: t("runningBalance"),
+        incoming: t("incoming"),
+        outgoing: t("outgoing"),
+      },
+      `caisse-${year}-${String(month).padStart(2, "0")}.xlsx`,
+    );
+    onExported();
+  }
+
   return (
     <section className="grid gap-4">
       <div className="rounded-xl border border-ledger-line bg-ledger-paper p-5 shadow-sm">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-2xl font-extrabold text-ledger-ink">
-            {formatArabicMonth(year, month)}
+            {formatMonthTitle(year, month, language)}
           </h2>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <select
               value={month}
               onChange={(event) => setMonth(Number(event.target.value))}
               className="rounded-lg border border-ledger-line bg-white px-3 py-2"
             >
-              {ARABIC_MONTHS.map((name, index) => (
+              {names.map((name, index) => (
                 <option key={name} value={index + 1}>
                   {name}
                 </option>
@@ -65,25 +89,32 @@ export function MonthlySummary({ entries }: MonthlySummaryProps) {
                 </option>
               ))}
             </select>
+            <button
+              type="button"
+              onClick={handleExport}
+              className="rounded-lg border border-ledger-line bg-white px-4 py-2 text-sm font-semibold"
+            >
+              {t("exportMonth")}
+            </button>
           </div>
         </div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
         <article className="rounded-xl border border-ledger-line bg-ledger-paper p-5 shadow-sm">
-          <p className="text-sm font-semibold text-ledger-in">إجمالي الوارد</p>
+          <p className="text-sm font-semibold text-ledger-in">{t("totalIn")}</p>
           <p className="mt-2 text-2xl font-extrabold text-ledger-in" dir="ltr">
             {formatMoney(totals.income)}
           </p>
         </article>
         <article className="rounded-xl border border-ledger-line bg-ledger-paper p-5 shadow-sm">
-          <p className="text-sm font-semibold text-ledger-out">إجمالي الصادر</p>
+          <p className="text-sm font-semibold text-ledger-out">{t("totalOut")}</p>
           <p className="mt-2 text-2xl font-extrabold text-ledger-out" dir="ltr">
             {formatMoney(totals.expense)}
           </p>
         </article>
         <article className="rounded-xl border border-ledger-line bg-ledger-paper p-5 shadow-sm">
-          <p className="text-sm font-semibold text-ledger-muted">صافي الحركة</p>
+          <p className="text-sm font-semibold text-ledger-muted">{t("netMovement")}</p>
           <p
             className={`mt-2 text-2xl font-extrabold ${
               totals.net >= 0 ? "text-ledger-in" : "text-ledger-out"
@@ -96,7 +127,7 @@ export function MonthlySummary({ entries }: MonthlySummaryProps) {
       </div>
 
       <p className="text-sm text-ledger-muted">
-        عدد الحركات هذا الشهر: {monthEntries.length}
+        {t("monthCount")}: {monthEntries.length}
       </p>
     </section>
   );

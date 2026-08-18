@@ -6,6 +6,18 @@
 
 النسخة المنشورة: https://fatimetou2.github.io/caissier/
 
+## اللغات والتصدير والحساب
+
+- العربية / Français (زر في الأعلى)
+- تصدير Excel لليوم أو للشهر أو لكل الحركات
+- تسجيل الدخول بالبريد وكلمة المرور
+
+بعد التحديث، نفّذ `supabase/enable-auth.sql` في SQL Editor.
+
+في Supabase: **Authentication → Providers → Email** عطّل **Confirm email** حتى تتمكن من الدخول مباشرة.
+
+ثم على الموقع: **Créer un compte** / **إنشاء حساب**.
+
 ## المتطلبات
 
 - Node.js 18 أو أحدث

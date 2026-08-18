@@ -8,6 +8,7 @@ export interface CashEntry {
   party: string | null;
   reason: string | null;
   notes: string | null;
+  user_id: string | null;
   created_at: string;
   updated_at: string;
 }

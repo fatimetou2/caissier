@@ -10,6 +10,7 @@ function mapEntry(row: Record<string, unknown>): CashEntry {
     party: (row.party as string | null) ?? null,
     reason: (row.reason as string | null) ?? null,
     notes: (row.notes as string | null) ?? null,
+    user_id: (row.user_id as string | null) ?? null,
     created_at: String(row.created_at),
     updated_at: String(row.updated_at),
   };
@@ -110,5 +111,18 @@ export async function updateEntry(
 
 export async function deleteEntry(id: string): Promise<void> {
   const { error } = await supabase.from("cash_entries").delete().eq("id", id);
+  if (error) throw error;
+}
+
+export async function claimOrphanEntries(): Promise<void> {
+  const { data } = await supabase.auth.getUser();
+  const userId = data.user?.id;
+  if (!userId) return;
+
+  const { error } = await supabase
+    .from("cash_entries")
+    .update({ user_id: userId })
+    .is("user_id", null);
+
   if (error) throw error;
 }

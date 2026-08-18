@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { useLanguage } from "../i18n/LanguageContext";
 import type { CashEntry, CashEntryInput, EntryType } from "../types/cashEntry";
 import { parseAmountInput } from "../utils/formatters";
 
@@ -17,6 +18,7 @@ export function EntryForm({
   onClose,
   onSubmit,
 }: EntryFormProps) {
+  const { t } = useLanguage();
   const [date, setDate] = useState(selectedDate);
   const [type, setType] = useState<EntryType>("in");
   const [amount, setAmount] = useState("");
@@ -46,15 +48,15 @@ export function EntryForm({
     const parsedAmount = parseAmountInput(amount);
 
     if (!date) {
-      setError("التاريخ مطلوب");
+      setError(t("dateRequired"));
       return;
     }
     if (type !== "in" && type !== "out") {
-      setError("النوع مطلوب");
+      setError(t("typeRequired"));
       return;
     }
     if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
-      setError("المبلغ يجب أن يكون أكبر من صفر");
+      setError(t("amountRequired"));
       return;
     }
 
@@ -71,7 +73,7 @@ export function EntryForm({
       });
       onClose();
     } catch {
-      setError("تعذر حفظ الحركة. حاول مرة أخرى.");
+      setError(t("saveFailed"));
       setSaving(false);
     }
   }
@@ -84,20 +86,20 @@ export function EntryForm({
       >
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-xl font-extrabold text-ledger-ink">
-            {entry ? "تعديل حركة" : "إضافة حركة"}
+            {entry ? t("editMovement") : t("addMovement")}
           </h3>
           <button
             type="button"
             onClick={onClose}
             className="text-sm font-semibold text-ledger-muted hover:text-ledger-ink"
           >
-            إغلاق
+            {t("close")}
           </button>
         </div>
 
         <div className="grid gap-4">
           <label className="grid gap-1 text-sm font-semibold text-ledger-ink">
-            التاريخ
+            {t("date")}
             <input
               type="date"
               required
@@ -109,7 +111,7 @@ export function EntryForm({
 
           <fieldset>
             <legend className="mb-2 text-sm font-semibold text-ledger-ink">
-              النوع
+              {t("type")}
             </legend>
             <div className="grid grid-cols-2 gap-2">
               <button
@@ -121,7 +123,7 @@ export function EntryForm({
                     : "border-ledger-line bg-white text-ledger-muted"
                 }`}
               >
-                وارد
+                {t("incoming")}
               </button>
               <button
                 type="button"
@@ -132,13 +134,13 @@ export function EntryForm({
                     : "border-ledger-line bg-white text-ledger-muted"
                 }`}
               >
-                صادر
+                {t("outgoing")}
               </button>
             </div>
           </fieldset>
 
           <label className="grid gap-1 text-sm font-semibold text-ledger-ink">
-            المبلغ
+            {t("amount")}
             <input
               type="text"
               inputMode="numeric"
@@ -152,7 +154,7 @@ export function EntryForm({
           </label>
 
           <label className="grid gap-1 text-sm font-semibold text-ledger-ink">
-            الطرف
+            {t("party")}
             <input
               type="text"
               value={party}
@@ -162,7 +164,7 @@ export function EntryForm({
           </label>
 
           <label className="grid gap-1 text-sm font-semibold text-ledger-ink">
-            السبب
+            {t("reason")}
             <input
               type="text"
               value={reason}
@@ -172,7 +174,7 @@ export function EntryForm({
           </label>
 
           <label className="grid gap-1 text-sm font-semibold text-ledger-ink">
-            الملاحظات
+            {t("notes")}
             <textarea
               value={notes}
               onChange={(event) => setNotes(event.target.value)}
@@ -194,14 +196,14 @@ export function EntryForm({
             disabled={saving}
             className="flex-1 rounded-lg bg-ledger-ink px-4 py-3 font-bold text-white disabled:opacity-60"
           >
-            {saving ? "جاري الحفظ..." : "حفظ"}
+            {saving ? t("saving") : t("save")}
           </button>
           <button
             type="button"
             onClick={onClose}
             className="rounded-lg border border-ledger-line px-4 py-3 font-semibold text-ledger-ink"
           >
-            إلغاء
+            {t("cancel")}
           </button>
         </div>
       </form>

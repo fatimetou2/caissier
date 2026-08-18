@@ -7,8 +7,10 @@ import { EntryForm } from "../components/EntryForm";
 import { EntryTable } from "../components/EntryTable";
 import { Header } from "../components/Header";
 import { MonthlySummary } from "../components/MonthlySummary";
+import { useLanguage } from "../i18n/LanguageContext";
 import { isSupabaseConfigured } from "../lib/supabase";
 import {
+  claimOrphanEntries,
   createEntry,
   deleteEntry,
   getEntries,
@@ -21,11 +23,13 @@ import {
   calculateRunningBalances,
   filterByDate,
 } from "../utils/calculations";
+import { exportEntriesToExcel } from "../utils/excelExport";
 import { todayISO } from "../utils/formatters";
 
 type View = "daily" | "monthly";
 
 export function CashJournal() {
+  const { t } = useLanguage();
   const [view, setView] = useState<View>("daily");
   const [selectedDate, setSelectedDate] = useState(todayISO);
   const [entries, setEntries] = useState<CashEntry[]>([]);
@@ -39,6 +43,7 @@ export function CashJournal() {
 
   const loadEntries = useCallback(async () => {
     setError("");
+    await claimOrphanEntries().catch(() => undefined);
     const data = await getEntries();
     setEntries(data);
   }, []);
@@ -50,9 +55,9 @@ export function CashJournal() {
     }
 
     void loadEntries()
-      .catch(() => setError("تعذر تحميل الحركات من قاعدة البيانات."))
+      .catch(() => setError(t("loadFailed")))
       .finally(() => setLoading(false));
-  }, [loadEntries]);
+  }, [loadEntries, t]);
 
   useEffect(() => {
     if (!message) return;
@@ -77,6 +82,28 @@ export function CashJournal() {
     [entries],
   );
 
+  const excelLabels = {
+    date: t("date"),
+    type: t("type"),
+    amount: t("amount"),
+    party: t("party"),
+    reason: t("reason"),
+    notes: t("notes"),
+    runningBalance: t("runningBalance"),
+    incoming: t("incoming"),
+    outgoing: t("outgoing"),
+  };
+
+  function exportDay() {
+    exportEntriesToExcel(dayEntries, excelLabels, `caisse-${selectedDate}.xlsx`);
+    setMessage(t("exported"));
+  }
+
+  function exportAll() {
+    exportEntriesToExcel(entries, excelLabels, "caisse-complet.xlsx");
+    setMessage(t("exported"));
+  }
+
   function openAddForm() {
     setEditingEntry(null);
     setFormOpen(true);
@@ -91,14 +118,14 @@ export function CashJournal() {
     if (editingEntry) {
       await updateEntry(editingEntry.id, input);
       await loadEntries();
-      setMessage("تم تعديل الحركة بنجاح");
+      setMessage(t("updatedSuccess"));
       return;
     }
 
     await createEntry(input);
     await loadEntries();
     setSelectedDate(input.date);
-    setMessage("تمت إضافة الحركة بنجاح");
+    setMessage(t("addedSuccess"));
   }
 
   async function handleDelete() {
@@ -109,7 +136,7 @@ export function CashJournal() {
       await loadEntries();
       setDeletingEntry(null);
     } catch {
-      setError("تعذر حذف الحركة.");
+      setError(t("deleteFailed"));
     } finally {
       setDeleting(false);
     }
@@ -119,22 +146,9 @@ export function CashJournal() {
     return (
       <main className="mx-auto max-w-xl px-4 py-16">
         <div className="rounded-xl border border-ledger-line bg-ledger-paper p-6 shadow-sm">
-          <h1 className="text-2xl font-extrabold text-ledger-ink">دفتر الصندوق</h1>
-          <p className="mt-4 text-ledger-ink">
-            يجب إعداد قاعدة بيانات Supabase أولاً حتى تُحفظ الحركات بشكل دائم.
-          </p>
-          <ol className="mt-4 list-decimal space-y-2 pr-5 text-sm leading-7 text-ledger-ink">
-            <li>أنشئ مشروعاً في Supabase.</li>
-            <li>نفّذ ملف supabase/schema.sql من SQL Editor.</li>
-            <li>
-              انسخ ملف .env.example إلى .env وأضف:
-              <br />
-              VITE_SUPABASE_URL
-              <br />
-              VITE_SUPABASE_ANON_KEY
-            </li>
-            <li>أعد تشغيل التطبيق.</li>
-          </ol>
+          <h1 className="text-2xl font-extrabold text-ledger-ink">
+            {t("appTitle")}
+          </h1>
         </div>
       </main>
     );
@@ -157,7 +171,10 @@ export function CashJournal() {
         )}
 
         {view === "monthly" ? (
-          <MonthlySummary entries={entries} />
+          <MonthlySummary
+            entries={entries}
+            onExported={() => setMessage(t("exported"))}
+          />
         ) : (
           <>
             <DailyNavigation
@@ -170,34 +187,48 @@ export function CashJournal() {
               dayExpense={dayTotals.expense}
             />
 
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="text-lg font-extrabold text-ledger-ink">
-                حركات اليوم
+                {t("todayEntries")}
               </h3>
-              <button
-                type="button"
-                onClick={openAddForm}
-                className="rounded-lg bg-ledger-ink px-4 py-2 text-sm font-bold text-white"
-              >
-                + إضافة حركة
-              </button>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={exportDay}
+                  className="rounded-lg border border-ledger-line bg-white px-4 py-2 text-sm font-semibold"
+                >
+                  {t("exportDay")}
+                </button>
+                <button
+                  type="button"
+                  onClick={exportAll}
+                  className="rounded-lg border border-ledger-line bg-white px-4 py-2 text-sm font-semibold"
+                >
+                  {t("exportAll")}
+                </button>
+                <button
+                  type="button"
+                  onClick={openAddForm}
+                  className="rounded-lg bg-ledger-ink px-4 py-2 text-sm font-bold text-white"
+                >
+                  {t("addEntry")}
+                </button>
+              </div>
             </div>
 
             {loading ? (
               <p className="rounded-xl border border-ledger-line bg-ledger-paper p-6 text-center text-ledger-muted">
-                جاري التحميل...
+                {t("loading")}
               </p>
             ) : dayEntries.length === 0 ? (
               <div className="rounded-xl border border-dashed border-ledger-line bg-ledger-paper p-8 text-center">
-                <p className="font-semibold text-ledger-ink">
-                  لا توجد حركات لهذا اليوم
-                </p>
+                <p className="font-semibold text-ledger-ink">{t("noEntries")}</p>
                 <button
                   type="button"
                   onClick={openAddForm}
                   className="mt-4 rounded-lg bg-ledger-ink px-4 py-2 text-sm font-bold text-white"
                 >
-                  + إضافة حركة
+                  {t("addEntry")}
                 </button>
               </div>
             ) : (

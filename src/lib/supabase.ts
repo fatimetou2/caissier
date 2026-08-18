@@ -13,4 +13,10 @@ export const isSupabaseConfigured = Boolean(
 export const supabase: SupabaseClient = createClient(
   supabaseUrl || "https://placeholder.supabase.co",
   supabaseAnonKey || "placeholder",
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+    },
+  },
 );

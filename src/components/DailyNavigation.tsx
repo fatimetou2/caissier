@@ -1,4 +1,5 @@
-import { addDays, formatArabicDate, todayISO } from "../utils/formatters";
+import { useLanguage } from "../i18n/LanguageContext";
+import { addDays, formatLongDate, todayISO } from "../utils/formatters";
 
 interface DailyNavigationProps {
   selectedDate: string;
@@ -9,6 +10,7 @@ export function DailyNavigation({
   selectedDate,
   onChangeDate,
 }: DailyNavigationProps) {
+  const { t, language } = useLanguage();
   const isToday = selectedDate === todayISO();
 
   return (
@@ -20,28 +22,30 @@ export function DailyNavigation({
             onClick={() => onChangeDate(addDays(selectedDate, -1))}
             className="rounded-lg border border-ledger-line bg-white px-3 py-2 text-sm font-semibold text-ledger-ink hover:bg-ledger-bg"
           >
-            ← اليوم السابق
+            {t("previousDay")}
           </button>
           <button
             type="button"
             onClick={() => onChangeDate(addDays(selectedDate, 1))}
             className="rounded-lg border border-ledger-line bg-white px-3 py-2 text-sm font-semibold text-ledger-ink hover:bg-ledger-bg"
           >
-            اليوم التالي →
+            {t("nextDay")}
           </button>
         </div>
 
         <div className="text-center">
           <h2 className="text-2xl font-extrabold text-ledger-ink">
-            {formatArabicDate(selectedDate)}
+            {formatLongDate(selectedDate, language)}
           </h2>
           {isToday && (
-            <p className="mt-1 text-sm font-semibold text-ledger-gold">اليوم</p>
+            <p className="mt-1 text-sm font-semibold text-ledger-gold">
+              {t("today")}
+            </p>
           )}
         </div>
 
         <label className="flex flex-col gap-1 text-sm text-ledger-muted">
-          اختيار التاريخ
+          {t("chooseDate")}
           <input
             type="date"
             value={selectedDate}

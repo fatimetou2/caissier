@@ -1,3 +1,4 @@
+import { useLanguage } from "../i18n/LanguageContext";
 import type { CashEntry } from "../types/cashEntry";
 import { signedAmount } from "../utils/calculations";
 import {
@@ -19,18 +20,20 @@ export function EntryTable({
   onEdit,
   onDelete,
 }: EntryTableProps) {
+  const { t } = useLanguage();
+
   return (
     <div className="hidden overflow-hidden rounded-xl border border-ledger-line bg-ledger-paper shadow-sm md:block">
-      <table className="w-full text-right">
+      <table className="w-full text-start">
         <thead className="bg-ledger-bg text-sm text-ledger-muted">
           <tr>
-            <th className="px-4 py-3 font-semibold">التاريخ</th>
-            <th className="px-4 py-3 font-semibold">النوع</th>
-            <th className="px-4 py-3 font-semibold">المبلغ</th>
-            <th className="px-4 py-3 font-semibold">الطرف</th>
-            <th className="px-4 py-3 font-semibold">السبب</th>
-            <th className="px-4 py-3 font-semibold">الرصيد التراكمي</th>
-            <th className="px-4 py-3 font-semibold">الإجراءات</th>
+            <th className="px-4 py-3 font-semibold">{t("date")}</th>
+            <th className="px-4 py-3 font-semibold">{t("type")}</th>
+            <th className="px-4 py-3 font-semibold">{t("amount")}</th>
+            <th className="px-4 py-3 font-semibold">{t("party")}</th>
+            <th className="px-4 py-3 font-semibold">{t("reason")}</th>
+            <th className="px-4 py-3 font-semibold">{t("runningBalance")}</th>
+            <th className="px-4 py-3 font-semibold">{t("actions")}</th>
           </tr>
         </thead>
         <tbody>
@@ -49,7 +52,7 @@ export function EntryTable({
                         : "bg-ledger-out-soft text-ledger-out"
                     }`}
                   >
-                    {isIn ? "وارد" : "صادر"}
+                    {isIn ? t("incoming") : t("outgoing")}
                   </span>
                 </td>
                 <td
@@ -72,14 +75,14 @@ export function EntryTable({
                       onClick={() => onEdit(entry)}
                       className="text-sm font-semibold text-ledger-ink hover:underline"
                     >
-                      تعديل
+                      {t("edit")}
                     </button>
                     <button
                       type="button"
                       onClick={() => onDelete(entry)}
                       className="text-sm font-semibold text-ledger-out hover:underline"
                     >
-                      حذف
+                      {t("delete")}
                     </button>
                   </div>
                 </td>

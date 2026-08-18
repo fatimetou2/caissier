@@ -1,3 +1,5 @@
+import type { Language } from "../i18n/translations";
+
 const ARABIC_MONTHS = [
   "يناير",
   "فبراير",
@@ -12,6 +14,25 @@ const ARABIC_MONTHS = [
   "نوفمبر",
   "ديسمبر",
 ];
+
+const FRENCH_MONTHS = [
+  "janvier",
+  "février",
+  "mars",
+  "avril",
+  "mai",
+  "juin",
+  "juillet",
+  "août",
+  "septembre",
+  "octobre",
+  "novembre",
+  "décembre",
+];
+
+function monthsFor(language: Language): string[] {
+  return language === "fr" ? FRENCH_MONTHS : ARABIC_MONTHS;
+}
 
 export function toISODate(date: Date = new Date()): string {
   const year = date.getFullYear();
@@ -37,12 +58,28 @@ export function parseISODate(isoDate: string): { year: number; month: number; da
 }
 
 export function formatArabicDate(isoDate: string): string {
+  return formatLongDate(isoDate, "ar");
+}
+
+export function formatLongDate(isoDate: string, language: Language = "ar"): string {
   const { year, month, day } = parseISODate(isoDate);
-  return `${day} ${ARABIC_MONTHS[month - 1]} ${year}`;
+  return `${day} ${monthsFor(language)[month - 1]} ${year}`;
 }
 
 export function formatArabicMonth(year: number, month: number): string {
-  return `${ARABIC_MONTHS[month - 1]} ${year}`;
+  return formatMonthTitle(year, month, "ar");
+}
+
+export function formatMonthTitle(
+  year: number,
+  month: number,
+  language: Language = "ar",
+): string {
+  return `${monthsFor(language)[month - 1]} ${year}`;
+}
+
+export function monthNames(language: Language): string[] {
+  return monthsFor(language);
 }
 
 export function formatDisplayDate(isoDate: string): string {

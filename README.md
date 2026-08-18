@@ -4,6 +4,8 @@
 
 يحفظ الحركات في **Supabase / PostgreSQL** بشكل دائم. لا يستخدم LocalStorage لتخزين البيانات المالية.
 
+النسخة المنشورة: https://fatimetou2.github.io/caissier/
+
 ## المتطلبات
 
 - Node.js 18 أو أحدث

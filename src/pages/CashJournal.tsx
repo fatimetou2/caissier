@@ -18,6 +18,7 @@ import {
 } from "../services/cashEntryService";
 import type { CashEntry, CashEntryInput, EntryFilter } from "../types/cashEntry";
 import {
+  calculateCurrentBalance,
   calculateDayTotals,
   calculateRunningBalances,
   filterByDate,
@@ -78,6 +79,10 @@ export function CashJournal() {
   const dayTotals = useMemo(
     () => calculateDayTotals(dayEntries),
     [dayEntries],
+  );
+  const currentBalance = useMemo(
+    () => calculateCurrentBalance(entries),
+    [entries],
   );
   const runningBalances = useMemo(
     () => calculateRunningBalances(entries),
@@ -146,6 +151,7 @@ export function CashJournal() {
       await cancelEntry(cancellingEntry.id, reason);
       await loadEntries();
       setCancellingEntry(null);
+      setStatusFilter("all");
       setMessage(t("voidedSuccess"));
     } catch {
       setError(t("voidFailed"));
@@ -200,6 +206,7 @@ export function CashJournal() {
               onChangeDate={setSelectedDate}
             />
             <BalanceCard
+              currentBalance={currentBalance}
               dayIncome={dayTotals.income}
               dayExpense={dayTotals.expense}
             />

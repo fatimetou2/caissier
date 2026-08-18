@@ -172,6 +172,11 @@ export async function cancelEntry(
   return mapEntry(fallback);
 }
 
+export async function deleteEntry(id: string): Promise<void> {
+  const { error } = await supabase.from("cash_entries").delete().eq("id", id);
+  if (error) throw error;
+}
+
 export async function claimOrphanEntries(): Promise<void> {
   const { data } = await supabase.auth.getUser();
   const userId = data.user?.id;

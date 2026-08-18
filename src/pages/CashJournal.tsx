@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { BalanceCard } from "../components/BalanceCard";
 import { CancelDialog } from "../components/CancelDialog";
 import { DailyNavigation } from "../components/DailyNavigation";
+import { DeleteDialog } from "../components/DeleteDialog";
 import { EntryCard } from "../components/EntryCard";
 import { EntryForm } from "../components/EntryForm";
 import { EntryTable } from "../components/EntryTable";
@@ -13,6 +14,7 @@ import {
   cancelEntry,
   claimOrphanEntries,
   createEntry,
+  deleteEntry,
   getEntries,
   updateEntry,
 } from "../services/cashEntryService";
@@ -42,6 +44,8 @@ export function CashJournal() {
   const [editingEntry, setEditingEntry] = useState<CashEntry | null>(null);
   const [cancellingEntry, setCancellingEntry] = useState<CashEntry | null>(null);
   const [cancelling, setCancelling] = useState(false);
+  const [deletingEntry, setDeletingEntry] = useState<CashEntry | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [statusFilter, setStatusFilter] = useState<EntryFilter>("active");
 
   const loadEntries = useCallback(async () => {
@@ -157,6 +161,21 @@ export function CashJournal() {
       setError(t("voidFailed"));
     } finally {
       setCancelling(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!deletingEntry || !isCancelled(deletingEntry)) return;
+    setDeleting(true);
+    try {
+      await deleteEntry(deletingEntry.id);
+      await loadEntries();
+      setDeletingEntry(null);
+      setMessage(t("deletedSuccess"));
+    } catch {
+      setError(t("deleteFailed"));
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -279,6 +298,7 @@ export function CashJournal() {
                   runningBalances={runningBalances}
                   onEdit={openEditForm}
                   onCancelEntry={setCancellingEntry}
+                  onDeleteEntry={setDeletingEntry}
                 />
                 <div className="grid gap-3 md:hidden">
                   {visibleDayEntries.map((entry) => (
@@ -288,6 +308,7 @@ export function CashJournal() {
                       runningBalance={runningBalances.get(entry.id) ?? 0}
                       onEdit={openEditForm}
                       onCancelEntry={setCancellingEntry}
+                      onDeleteEntry={setDeletingEntry}
                     />
                   ))}
                 </div>
@@ -313,6 +334,13 @@ export function CashJournal() {
         loading={cancelling}
         onConfirm={(reason) => void handleCancel(reason)}
         onClose={() => setCancellingEntry(null)}
+      />
+
+      <DeleteDialog
+        open={Boolean(deletingEntry)}
+        loading={deleting}
+        onConfirm={() => void handleDelete()}
+        onClose={() => setDeletingEntry(null)}
       />
     </div>
   );

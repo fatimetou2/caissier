@@ -13,6 +13,7 @@ interface EntryTableProps {
   runningBalances: Map<string, number>;
   onEdit: (entry: CashEntry) => void;
   onCancelEntry: (entry: CashEntry) => void;
+  onDeleteEntry: (entry: CashEntry) => void;
 }
 
 export function EntryTable({
@@ -20,6 +21,7 @@ export function EntryTable({
   runningBalances,
   onEdit,
   onCancelEntry,
+  onDeleteEntry,
 }: EntryTableProps) {
   const { t } = useLanguage();
 
@@ -102,9 +104,13 @@ export function EntryTable({
                 </td>
                 <td className="px-4 py-3">
                   {cancelled ? (
-                    <span className="text-sm font-bold text-ledger-out">
-                      {t("statusCancelled")}
-                    </span>
+                    <button
+                      type="button"
+                      onClick={() => onDeleteEntry(entry)}
+                      className="text-sm font-semibold text-ledger-out hover:underline"
+                    >
+                      {t("delete")}
+                    </button>
                   ) : (
                     <div className="flex gap-2">
                       <button

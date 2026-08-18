@@ -13,6 +13,7 @@ interface EntryCardProps {
   runningBalance: number;
   onEdit: (entry: CashEntry) => void;
   onCancelEntry: (entry: CashEntry) => void;
+  onDeleteEntry: (entry: CashEntry) => void;
 }
 
 export function EntryCard({
@@ -20,6 +21,7 @@ export function EntryCard({
   runningBalance,
   onEdit,
   onCancelEntry,
+  onDeleteEntry,
 }: EntryCardProps) {
   const { t, language } = useLanguage();
   const isIn = entry.type === "in";
@@ -109,24 +111,34 @@ export function EntryCard({
         </div>
       </dl>
 
-      {!cancelled && (
-        <div className="mt-4 flex gap-2 border-t border-ledger-line pt-3">
+      <div className="mt-4 flex gap-2 border-t border-ledger-line pt-3">
+        {cancelled ? (
           <button
             type="button"
-            onClick={() => onEdit(entry)}
-            className="flex-1 rounded-lg border border-ledger-line px-3 py-2 text-sm font-semibold"
-          >
-            {t("edit")}
-          </button>
-          <button
-            type="button"
-            onClick={() => onCancelEntry(entry)}
+            onClick={() => onDeleteEntry(entry)}
             className="flex-1 rounded-lg border border-ledger-out-soft bg-ledger-out-soft px-3 py-2 text-sm font-semibold text-ledger-out"
           >
-            {t("voidEntry")}
+            {t("delete")}
           </button>
-        </div>
-      )}
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={() => onEdit(entry)}
+              className="flex-1 rounded-lg border border-ledger-line px-3 py-2 text-sm font-semibold"
+            >
+              {t("edit")}
+            </button>
+            <button
+              type="button"
+              onClick={() => onCancelEntry(entry)}
+              className="flex-1 rounded-lg border border-ledger-out-soft bg-ledger-out-soft px-3 py-2 text-sm font-semibold text-ledger-out"
+            >
+              {t("voidEntry")}
+            </button>
+          </>
+        )}
+      </div>
     </article>
   );
 }

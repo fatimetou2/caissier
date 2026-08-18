@@ -28,12 +28,6 @@ export function signedAmount(entry: CashEntry): number {
   return entry.type === "in" ? entry.amount : -entry.amount;
 }
 
-export function calculateCurrentBalance(entries: CashEntry[]): number {
-  return activeEntries(entries).reduce((sum, entry) => {
-    return sum + (entry.type === "in" ? entry.amount : -entry.amount);
-  }, 0);
-}
-
 export function calculateDayTotals(entries: CashEntry[]): DayTotals {
   const active = activeEntries(entries);
   const income = active

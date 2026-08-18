@@ -18,7 +18,6 @@ import {
 } from "../services/cashEntryService";
 import type { CashEntry, CashEntryInput, EntryFilter } from "../types/cashEntry";
 import {
-  calculateCurrentBalance,
   calculateDayTotals,
   calculateRunningBalances,
   filterByDate,
@@ -79,10 +78,6 @@ export function CashJournal() {
   const dayTotals = useMemo(
     () => calculateDayTotals(dayEntries),
     [dayEntries],
-  );
-  const currentBalance = useMemo(
-    () => calculateCurrentBalance(entries),
-    [entries],
   );
   const runningBalances = useMemo(
     () => calculateRunningBalances(entries),
@@ -205,7 +200,6 @@ export function CashJournal() {
               onChangeDate={setSelectedDate}
             />
             <BalanceCard
-              currentBalance={currentBalance}
               dayIncome={dayTotals.income}
               dayExpense={dayTotals.expense}
             />

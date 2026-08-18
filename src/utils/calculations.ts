@@ -1,4 +1,4 @@
-import type { CashEntry, DayTotals } from "../types/cashEntry";
+import type { CashEntry, DayTotals, EntryFilter } from "../types/cashEntry";
 
 function compareEntries(a: CashEntry, b: CashEntry): number {
   if (a.date !== b.date) {
@@ -11,19 +11,35 @@ export function sortChronologically(entries: CashEntry[]): CashEntry[] {
   return [...entries].sort(compareEntries);
 }
 
+export function isCancelled(entry: CashEntry): boolean {
+  return entry.status === "cancelled";
+}
+
+export function isActive(entry: CashEntry): boolean {
+  return !isCancelled(entry);
+}
+
+export function activeEntries(entries: CashEntry[]): CashEntry[] {
+  return entries.filter(isActive);
+}
+
 export function signedAmount(entry: CashEntry): number {
+  if (isCancelled(entry)) return 0;
   return entry.type === "in" ? entry.amount : -entry.amount;
 }
 
 export function calculateCurrentBalance(entries: CashEntry[]): number {
-  return entries.reduce((sum, entry) => sum + signedAmount(entry), 0);
+  return activeEntries(entries).reduce((sum, entry) => {
+    return sum + (entry.type === "in" ? entry.amount : -entry.amount);
+  }, 0);
 }
 
 export function calculateDayTotals(entries: CashEntry[]): DayTotals {
-  const income = entries
+  const active = activeEntries(entries);
+  const income = active
     .filter((entry) => entry.type === "in")
     .reduce((sum, entry) => sum + entry.amount, 0);
-  const expense = entries
+  const expense = active
     .filter((entry) => entry.type === "out")
     .reduce((sum, entry) => sum + entry.amount, 0);
 
@@ -42,7 +58,9 @@ export function calculateRunningBalances(
   let running = 0;
 
   for (const entry of sorted) {
-    running += signedAmount(entry);
+    if (isActive(entry)) {
+      running += entry.type === "in" ? entry.amount : -entry.amount;
+    }
     balances.set(entry.id, running);
   }
 
@@ -62,4 +80,13 @@ export function filterByMonth(
   return sortChronologically(
     entries.filter((entry) => entry.date.startsWith(prefix)),
   );
+}
+
+export function filterByStatus(
+  entries: CashEntry[],
+  filter: EntryFilter,
+): CashEntry[] {
+  if (filter === "active") return entries.filter(isActive);
+  if (filter === "cancelled") return entries.filter(isCancelled);
+  return entries;
 }

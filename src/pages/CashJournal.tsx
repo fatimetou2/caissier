@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { BalanceCard } from "../components/BalanceCard";
+import { CancelDialog } from "../components/CancelDialog";
 import { DailyNavigation } from "../components/DailyNavigation";
-import { DeleteDialog } from "../components/DeleteDialog";
 import { EntryCard } from "../components/EntryCard";
 import { EntryForm } from "../components/EntryForm";
 import { EntryTable } from "../components/EntryTable";
@@ -10,18 +10,20 @@ import { MonthlySummary } from "../components/MonthlySummary";
 import { useLanguage } from "../i18n/LanguageContext";
 import { isSupabaseConfigured } from "../lib/supabase";
 import {
+  cancelEntry,
   claimOrphanEntries,
   createEntry,
-  deleteEntry,
   getEntries,
   updateEntry,
 } from "../services/cashEntryService";
-import type { CashEntry, CashEntryInput } from "../types/cashEntry";
+import type { CashEntry, CashEntryInput, EntryFilter } from "../types/cashEntry";
 import {
   calculateCurrentBalance,
   calculateDayTotals,
   calculateRunningBalances,
   filterByDate,
+  filterByStatus,
+  isCancelled,
 } from "../utils/calculations";
 import { exportEntriesToExcel } from "../utils/excelExport";
 import { todayISO } from "../utils/formatters";
@@ -38,8 +40,9 @@ export function CashJournal() {
   const [message, setMessage] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<CashEntry | null>(null);
-  const [deletingEntry, setDeletingEntry] = useState<CashEntry | null>(null);
-  const [deleting, setDeleting] = useState(false);
+  const [cancellingEntry, setCancellingEntry] = useState<CashEntry | null>(null);
+  const [cancelling, setCancelling] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<EntryFilter>("active");
 
   const loadEntries = useCallback(async () => {
     setError("");
@@ -69,6 +72,10 @@ export function CashJournal() {
     () => filterByDate(entries, selectedDate),
     [entries, selectedDate],
   );
+  const visibleDayEntries = useMemo(
+    () => filterByStatus(dayEntries, statusFilter),
+    [dayEntries, statusFilter],
+  );
   const dayTotals = useMemo(
     () => calculateDayTotals(dayEntries),
     [dayEntries],
@@ -92,10 +99,18 @@ export function CashJournal() {
     runningBalance: t("runningBalance"),
     incoming: t("incoming"),
     outgoing: t("outgoing"),
+    status: t("status"),
+    statusActive: t("statusActive"),
+    statusCancelled: t("statusCancelled"),
+    voidReason: t("voidReason"),
   };
 
   function exportDay() {
-    exportEntriesToExcel(dayEntries, excelLabels, `caisse-${selectedDate}.xlsx`);
+    exportEntriesToExcel(
+      visibleDayEntries,
+      excelLabels,
+      `caisse-${selectedDate}.xlsx`,
+    );
     setMessage(t("exported"));
   }
 
@@ -110,6 +125,7 @@ export function CashJournal() {
   }
 
   function openEditForm(entry: CashEntry) {
+    if (isCancelled(entry)) return;
     setEditingEntry(entry);
     setFormOpen(true);
   }
@@ -128,19 +144,26 @@ export function CashJournal() {
     setMessage(t("addedSuccess"));
   }
 
-  async function handleDelete() {
-    if (!deletingEntry) return;
-    setDeleting(true);
+  async function handleCancel(reason: string) {
+    if (!cancellingEntry) return;
+    setCancelling(true);
     try {
-      await deleteEntry(deletingEntry.id);
+      await cancelEntry(cancellingEntry.id, reason);
       await loadEntries();
-      setDeletingEntry(null);
+      setCancellingEntry(null);
+      setMessage(t("voidedSuccess"));
     } catch {
-      setError(t("deleteFailed"));
+      setError(t("voidFailed"));
     } finally {
-      setDeleting(false);
+      setCancelling(false);
     }
   }
+
+  const filters: { id: EntryFilter; label: string }[] = [
+    { id: "all", label: t("filterAll") },
+    { id: "active", label: t("filterActive") },
+    { id: "cancelled", label: t("filterCancelled") },
+  ];
 
   if (!isSupabaseConfigured) {
     return (
@@ -216,11 +239,28 @@ export function CashJournal() {
               </div>
             </div>
 
+            <div className="flex flex-wrap gap-2">
+              {filters.map((filter) => (
+                <button
+                  key={filter.id}
+                  type="button"
+                  onClick={() => setStatusFilter(filter.id)}
+                  className={`rounded-full border px-4 py-1.5 text-sm font-semibold ${
+                    statusFilter === filter.id
+                      ? "border-ledger-ink bg-ledger-ink text-white"
+                      : "border-ledger-line bg-white text-ledger-ink"
+                  }`}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
+
             {loading ? (
               <p className="rounded-xl border border-ledger-line bg-ledger-paper p-6 text-center text-ledger-muted">
                 {t("loading")}
               </p>
-            ) : dayEntries.length === 0 ? (
+            ) : visibleDayEntries.length === 0 ? (
               <div className="rounded-xl border border-dashed border-ledger-line bg-ledger-paper p-8 text-center">
                 <p className="font-semibold text-ledger-ink">{t("noEntries")}</p>
                 <button
@@ -234,19 +274,19 @@ export function CashJournal() {
             ) : (
               <>
                 <EntryTable
-                  entries={dayEntries}
+                  entries={visibleDayEntries}
                   runningBalances={runningBalances}
                   onEdit={openEditForm}
-                  onDelete={setDeletingEntry}
+                  onCancelEntry={setCancellingEntry}
                 />
                 <div className="grid gap-3 md:hidden">
-                  {dayEntries.map((entry) => (
+                  {visibleDayEntries.map((entry) => (
                     <EntryCard
                       key={entry.id}
                       entry={entry}
                       runningBalance={runningBalances.get(entry.id) ?? 0}
                       onEdit={openEditForm}
-                      onDelete={setDeletingEntry}
+                      onCancelEntry={setCancellingEntry}
                     />
                   ))}
                 </div>
@@ -267,11 +307,11 @@ export function CashJournal() {
         onSubmit={handleSave}
       />
 
-      <DeleteDialog
-        open={Boolean(deletingEntry)}
-        loading={deleting}
-        onConfirm={() => void handleDelete()}
-        onCancel={() => setDeletingEntry(null)}
+      <CancelDialog
+        open={Boolean(cancellingEntry)}
+        loading={cancelling}
+        onConfirm={(reason) => void handleCancel(reason)}
+        onClose={() => setCancellingEntry(null)}
       />
     </div>
   );

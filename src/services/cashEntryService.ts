@@ -10,6 +10,9 @@ function mapEntry(row: Record<string, unknown>): CashEntry {
     party: (row.party as string | null) ?? null,
     reason: (row.reason as string | null) ?? null,
     notes: (row.notes as string | null) ?? null,
+    status: row.status === "cancelled" ? "cancelled" : "active",
+    cancelled_at: (row.cancelled_at as string | null) ?? null,
+    cancel_reason: (row.cancel_reason as string | null) ?? null,
     user_id: (row.user_id as string | null) ?? null,
     created_at: String(row.created_at),
     updated_at: String(row.updated_at),
@@ -109,9 +112,24 @@ export async function updateEntry(
   return mapEntry(data);
 }
 
-export async function deleteEntry(id: string): Promise<void> {
-  const { error } = await supabase.from("cash_entries").delete().eq("id", id);
+export async function cancelEntry(
+  id: string,
+  cancelReason: string,
+): Promise<CashEntry> {
+  const { data, error } = await supabase
+    .from("cash_entries")
+    .update({
+      status: "cancelled",
+      cancelled_at: new Date().toISOString(),
+      cancel_reason: emptyToNull(cancelReason),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .select("*")
+    .single();
+
   if (error) throw error;
+  return mapEntry(data);
 }
 
 export async function claimOrphanEntries(): Promise<void> {

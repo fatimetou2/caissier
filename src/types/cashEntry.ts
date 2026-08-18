@@ -1,4 +1,6 @@
 export type EntryType = "in" | "out";
+export type EntryStatus = "active" | "cancelled";
+export type EntryFilter = "all" | "active" | "cancelled";
 
 export interface CashEntry {
   id: string;
@@ -8,6 +10,9 @@ export interface CashEntry {
   party: string | null;
   reason: string | null;
   notes: string | null;
+  status: EntryStatus;
+  cancelled_at: string | null;
+  cancel_reason: string | null;
   user_id: string | null;
   created_at: string;
   updated_at: string;

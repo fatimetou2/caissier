@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useLanguage } from "../i18n/LanguageContext";
 import type { CashEntry } from "../types/cashEntry";
-import { calculateDayTotals, filterByMonth } from "../utils/calculations";
+import { activeEntries, calculateDayTotals, filterByMonth } from "../utils/calculations";
 import { exportEntriesToExcel } from "../utils/excelExport";
 import {
   formatMonthTitle,
@@ -53,6 +53,10 @@ export function MonthlySummary({ entries, onExported }: MonthlySummaryProps) {
         runningBalance: t("runningBalance"),
         incoming: t("incoming"),
         outgoing: t("outgoing"),
+        status: t("status"),
+        statusActive: t("statusActive"),
+        statusCancelled: t("statusCancelled"),
+        voidReason: t("voidReason"),
       },
       `caisse-${year}-${String(month).padStart(2, "0")}.xlsx`,
     );
@@ -127,7 +131,7 @@ export function MonthlySummary({ entries, onExported }: MonthlySummaryProps) {
       </div>
 
       <p className="text-sm text-ledger-muted">
-        {t("monthCount")}: {monthEntries.length}
+        {t("monthCount")}: {activeEntries(monthEntries).length}
       </p>
     </section>
   );

@@ -9,10 +9,14 @@ create table if not exists public.cash_entries (
   party text,
   reason text,
   notes text,
+  status text not null default 'active',
+  cancelled_at timestamptz,
+  cancel_reason text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint cash_entries_type_check check (type in ('in', 'out')),
-  constraint cash_entries_amount_positive check (amount > 0)
+  constraint cash_entries_amount_positive check (amount > 0),
+  constraint cash_entries_status_check check (status in ('active', 'cancelled'))
 );
 
 create index if not exists cash_entries_date_idx on public.cash_entries (date);

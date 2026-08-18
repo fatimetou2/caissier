@@ -1,6 +1,6 @@
 import * as XLSX from "xlsx";
 import type { CashEntry } from "../types/cashEntry";
-import { calculateRunningBalances, signedAmount } from "./calculations";
+import { calculateRunningBalances, isCancelled } from "./calculations";
 import { formatDisplayDate } from "./formatters";
 
 interface ExportLabels {
@@ -13,6 +13,10 @@ interface ExportLabels {
   runningBalance: string;
   incoming: string;
   outgoing: string;
+  status: string;
+  statusActive: string;
+  statusCancelled: string;
+  voidReason: string;
 }
 
 export function exportEntriesToExcel(
@@ -24,10 +28,14 @@ export function exportEntriesToExcel(
   const rows = entries.map((entry) => ({
     [labels.date]: formatDisplayDate(entry.date),
     [labels.type]: entry.type === "in" ? labels.incoming : labels.outgoing,
-    [labels.amount]: signedAmount(entry),
+    [labels.amount]: entry.type === "in" ? entry.amount : -entry.amount,
     [labels.party]: entry.party ?? "",
     [labels.reason]: entry.reason ?? "",
     [labels.notes]: entry.notes ?? "",
+    [labels.status]: isCancelled(entry)
+      ? labels.statusCancelled
+      : labels.statusActive,
+    [labels.voidReason]: entry.cancel_reason ?? "",
     [labels.runningBalance]: running.get(entry.id) ?? 0,
   }));
 
@@ -38,6 +46,8 @@ export function exportEntriesToExcel(
     { wch: 14 },
     { wch: 20 },
     { wch: 20 },
+    { wch: 24 },
+    { wch: 12 },
     { wch: 24 },
     { wch: 16 },
   ];

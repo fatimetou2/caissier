@@ -30,20 +30,8 @@ export function signedAmount(entry: CashEntry): number {
 
 export function calculateCurrentBalance(entries: CashEntry[]): number {
   return activeEntries(entries).reduce((sum, entry) => {
-    return sum + signedAmount(entry);
+    return sum + (entry.type === "in" ? entry.amount : -entry.amount);
   }, 0);
-}
-
-export function balanceBeforeDate(entries: CashEntry[], date: string): number {
-  return activeEntries(entries)
-    .filter((entry) => entry.date < date)
-    .reduce((sum, entry) => sum + signedAmount(entry), 0);
-}
-
-export function balanceUpToDate(entries: CashEntry[], date: string): number {
-  return activeEntries(entries)
-    .filter((entry) => entry.date <= date)
-    .reduce((sum, entry) => sum + signedAmount(entry), 0);
 }
 
 export function calculateDayTotals(entries: CashEntry[]): DayTotals {
@@ -64,15 +52,14 @@ export function calculateDayTotals(entries: CashEntry[]): DayTotals {
 
 export function calculateRunningBalances(
   entries: CashEntry[],
-  startingBalance = 0,
 ): Map<string, number> {
   const sorted = sortChronologically(entries);
   const balances = new Map<string, number>();
-  let running = startingBalance;
+  let running = 0;
 
   for (const entry of sorted) {
     if (isActive(entry)) {
-      running += signedAmount(entry);
+      running += entry.type === "in" ? entry.amount : -entry.amount;
     }
     balances.set(entry.id, running);
   }

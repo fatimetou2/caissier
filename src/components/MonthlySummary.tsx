@@ -1,21 +1,15 @@
 import { useMemo, useState } from "react";
 import { useLanguage } from "../i18n/LanguageContext";
 import type { CashEntry } from "../types/cashEntry";
-import {
-  activeEntries,
-  balanceBeforeDate,
-  balanceUpToDate,
-  calculateDayTotals,
-  filterByMonth,
-} from "../utils/calculations";
+import { activeEntries, calculateDayTotals, filterByMonth } from "../utils/calculations";
 import { exportEntriesToExcel } from "../utils/excelExport";
 import {
   formatMonthTitle,
+  formatMoney,
   monthNames,
   parseISODate,
   todayISO,
 } from "../utils/formatters";
-import { BalanceCard } from "./BalanceCard";
 
 interface MonthlySummaryProps {
   entries: CashEntry[];
@@ -36,18 +30,6 @@ export function MonthlySummary({ entries, onExported }: MonthlySummaryProps) {
   const totals = useMemo(
     () => calculateDayTotals(monthEntries),
     [monthEntries],
-  );
-  const monthStart = `${year}-${String(month).padStart(2, "0")}-01`;
-  const monthEnd = `${year}-${String(month).padStart(2, "0")}-${String(
-    new Date(year, month, 0).getDate(),
-  ).padStart(2, "0")}`;
-  const openingBalance = useMemo(
-    () => balanceBeforeDate(entries, monthStart),
-    [entries, monthStart],
-  );
-  const cumulativeTotal = useMemo(
-    () => balanceUpToDate(entries, monthEnd),
-    [entries, monthEnd],
   );
 
   const years = useMemo(() => {
@@ -77,7 +59,6 @@ export function MonthlySummary({ entries, onExported }: MonthlySummaryProps) {
         voidReason: t("voidReason"),
       },
       `caisse-${year}-${String(month).padStart(2, "0")}.xlsx`,
-      openingBalance,
     );
     onExported();
   }
@@ -123,14 +104,31 @@ export function MonthlySummary({ entries, onExported }: MonthlySummaryProps) {
         </div>
       </div>
 
-      <BalanceCard
-        period="month"
-        openingBalance={openingBalance}
-        dayIncome={totals.income}
-        dayExpense={totals.expense}
-        dayTotal={totals.net}
-        cumulativeTotal={cumulativeTotal}
-      />
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        <article className="rounded-xl border border-ledger-line bg-ledger-paper p-2 shadow-sm sm:p-5">
+          <p className="text-[11px] font-semibold leading-tight text-ledger-in sm:text-sm">{t("totalIn")}</p>
+          <p className="mt-1 break-all text-sm font-extrabold text-ledger-in sm:mt-2 sm:text-2xl" dir="ltr">
+            {formatMoney(totals.income)}
+          </p>
+        </article>
+        <article className="rounded-xl border border-ledger-line bg-ledger-paper p-2 shadow-sm sm:p-5">
+          <p className="text-[11px] font-semibold leading-tight text-ledger-out sm:text-sm">{t("totalOut")}</p>
+          <p className="mt-1 break-all text-sm font-extrabold text-ledger-out sm:mt-2 sm:text-2xl" dir="ltr">
+            {formatMoney(totals.expense)}
+          </p>
+        </article>
+        <article className="rounded-xl border border-ledger-line bg-ledger-paper p-2 shadow-sm sm:p-5">
+          <p className="text-[11px] font-semibold leading-tight text-ledger-muted sm:text-sm">{t("netMovement")}</p>
+          <p
+            className={`mt-1 break-all text-sm font-extrabold sm:mt-2 sm:text-2xl ${
+              totals.net >= 0 ? "text-ledger-in" : "text-ledger-out"
+            }`}
+            dir="ltr"
+          >
+            {formatMoney(totals.net)}
+          </p>
+        </article>
+      </div>
 
       <p className="text-sm text-ledger-muted">
         {t("monthCount")}: {activeEntries(monthEntries).length}

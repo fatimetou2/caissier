@@ -103,32 +103,39 @@ export function EntryTable({
                   {formatMoney(runningBalances.get(entry.id) ?? 0)}
                 </td>
                 <td className="px-4 py-3">
-                  {cancelled ? (
-                    <button
-                      type="button"
-                      onClick={() => onDeleteEntry(entry)}
-                      className="text-sm font-semibold text-ledger-out hover:underline"
-                    >
-                      {t("delete")}
-                    </button>
-                  ) : (
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => onEdit(entry)}
-                        className="text-sm font-semibold text-ledger-ink hover:underline"
-                      >
-                        {t("edit")}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onCancelEntry(entry)}
-                        className="text-sm font-semibold text-ledger-out hover:underline"
-                      >
-                        {t("voidEntry")}
-                      </button>
-                    </div>
-                  )}
+                  <div className="flex flex-wrap items-center gap-2">
+                    {cancelled ? (
+                      <>
+                        <span className="rounded-full bg-ledger-out px-2 py-1 text-xs font-bold text-white">
+                          {t("statusCancelled")}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => onDeleteEntry(entry)}
+                          className="rounded-lg bg-ledger-out px-3 py-1.5 text-sm font-bold text-white"
+                        >
+                          {t("delete")}
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => onEdit(entry)}
+                          className="text-sm font-semibold text-ledger-ink hover:underline"
+                        >
+                          {t("edit")}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onCancelEntry(entry)}
+                          className="text-sm font-semibold text-ledger-out hover:underline"
+                        >
+                          {t("voidEntry")}
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </td>
               </tr>
             );

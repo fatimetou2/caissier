@@ -1,11 +1,10 @@
 import { supabase } from "../lib/supabase";
 import type { CashEntry, CashEntryInput } from "../types/cashEntry";
-import { encodeCancelledNotes, parseCancelledNotes } from "../utils/cancelMeta";
+import { encodeCancelledNotes, isCancelledRecord, parseCancelledNotes } from "../utils/cancelMeta";
 
 function mapEntry(row: Record<string, unknown>): CashEntry {
   const encoded = parseCancelledNotes((row.notes as string | null) ?? null);
-  const cancelledByColumn = row.status === "cancelled";
-  const cancelled = cancelledByColumn || Boolean(encoded);
+  const cancelled = isCancelledRecord(row);
 
   return {
     id: String(row.id),
@@ -14,12 +13,9 @@ function mapEntry(row: Record<string, unknown>): CashEntry {
     amount: Number(row.amount),
     party: (row.party as string | null) ?? null,
     reason: (row.reason as string | null) ?? null,
-    notes: cancelledByColumn
-      ? ((row.notes as string | null) ?? null)
-      : (encoded?.notes ?? ((row.notes as string | null) ?? null)),
+    notes: encoded?.notes ?? ((row.notes as string | null) ?? null),
     status: cancelled ? "cancelled" : "active",
-    cancelled_at:
-      (row.cancelled_at as string | null) ?? encoded?.at ?? null,
+    cancelled_at: (row.cancelled_at as string | null) ?? encoded?.at ?? null,
     cancel_reason:
       (row.cancel_reason as string | null) ?? encoded?.reason ?? null,
     user_id: (row.user_id as string | null) ?? null,
@@ -126,26 +122,6 @@ export async function cancelEntry(
   cancelReason: string,
 ): Promise<CashEntry> {
   const cancelledAt = new Date().toISOString();
-  const { data, error } = await supabase
-    .from("cash_entries")
-    .update({
-      status: "cancelled",
-      cancelled_at: cancelledAt,
-      cancel_reason: emptyToNull(cancelReason),
-      updated_at: cancelledAt,
-    })
-    .eq("id", id)
-    .select("*")
-    .single();
-
-  if (!error) return mapEntry(data);
-
-  const missingColumn =
-    error.code === "PGRST204" ||
-    error.message.toLowerCase().includes("column") ||
-    error.message.toLowerCase().includes("schema cache");
-
-  if (!missingColumn) throw error;
 
   const current = await supabase
     .from("cash_entries")
@@ -154,22 +130,22 @@ export async function cancelEntry(
     .single();
   if (current.error) throw current.error;
 
-  const { data: fallback, error: fallbackError } = await supabase
+  const originalNotes = parseCancelledNotes(
+    (current.data.notes as string | null) ?? null,
+  )?.notes ?? ((current.data.notes as string | null) ?? null);
+
+  const { data, error } = await supabase
     .from("cash_entries")
     .update({
-      notes: encodeCancelledNotes(
-        (current.data.notes as string | null) ?? null,
-        cancelReason,
-        cancelledAt,
-      ),
+      notes: encodeCancelledNotes(originalNotes, cancelReason, cancelledAt),
       updated_at: cancelledAt,
     })
     .eq("id", id)
     .select("*")
     .single();
 
-  if (fallbackError) throw fallbackError;
-  return mapEntry(fallback);
+  if (error) throw error;
+  return mapEntry(data);
 }
 
 export async function deleteEntry(id: string): Promise<void> {

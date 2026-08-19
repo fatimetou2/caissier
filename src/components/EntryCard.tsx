@@ -116,7 +116,7 @@ export function EntryCard({
           <button
             type="button"
             onClick={() => onDeleteEntry(entry)}
-            className="flex-1 rounded-lg border border-ledger-out-soft bg-ledger-out-soft px-3 py-2 text-sm font-semibold text-ledger-out"
+            className="flex-1 rounded-lg bg-ledger-out px-3 py-2 text-sm font-bold text-white"
           >
             {t("delete")}
           </button>

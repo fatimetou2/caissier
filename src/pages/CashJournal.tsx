@@ -154,7 +154,7 @@ export function CashJournal() {
       await cancelEntry(cancellingEntry.id, reason);
       await loadEntries();
       setCancellingEntry(null);
-      setStatusFilter("all");
+      setStatusFilter("cancelled");
       setMessage(t("voidedSuccess"));
     } catch {
       setError(t("voidFailed"));

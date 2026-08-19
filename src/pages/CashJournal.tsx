@@ -19,9 +19,9 @@ import {
 } from "../services/cashEntryService";
 import type { CashEntry, CashEntryInput, EntryFilter } from "../types/cashEntry";
 import {
-  calculateCurrentBalance,
+  balanceBeforeDate,
+  balanceUpToDate,
   calculateDayTotals,
-  calculateRunningBalances,
   filterByDate,
   filterByStatus,
   isCancelled,
@@ -83,13 +83,13 @@ export function CashJournal() {
     () => calculateDayTotals(dayEntries),
     [dayEntries],
   );
-  const currentBalance = useMemo(
-    () => calculateCurrentBalance(entries),
-    [entries],
+  const openingBalance = useMemo(
+    () => balanceBeforeDate(entries, selectedDate),
+    [entries, selectedDate],
   );
-  const runningBalances = useMemo(
-    () => calculateRunningBalances(entries),
-    [entries],
+  const cumulativeTotal = useMemo(
+    () => balanceUpToDate(entries, selectedDate),
+    [entries, selectedDate],
   );
 
   const excelLabels = {
@@ -113,6 +113,7 @@ export function CashJournal() {
       visibleDayEntries,
       excelLabels,
       `caisse-${selectedDate}.xlsx`,
+      openingBalance,
     );
     setMessage(t("exported"));
   }
@@ -224,9 +225,11 @@ export function CashJournal() {
               onChangeDate={setSelectedDate}
             />
             <BalanceCard
-              currentBalance={currentBalance}
+              openingBalance={openingBalance}
               dayIncome={dayTotals.income}
               dayExpense={dayTotals.expense}
+              dayTotal={dayTotals.net}
+              cumulativeTotal={cumulativeTotal}
             />
 
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -293,7 +296,6 @@ export function CashJournal() {
             ) : (
               <EntryTable
                 entries={visibleDayEntries}
-                runningBalances={runningBalances}
                 onEdit={openEditForm}
                 onCancelEntry={setCancellingEntry}
                 onDeleteEntry={setDeletingEntry}

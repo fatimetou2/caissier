@@ -23,8 +23,9 @@ export function exportEntriesToExcel(
   entries: CashEntry[],
   labels: ExportLabels,
   filename: string,
+  startingBalance = 0,
 ) {
-  const running = calculateRunningBalances(entries);
+  const running = calculateRunningBalances(entries, startingBalance);
   const rows = entries.map((entry) => ({
     [labels.date]: formatDisplayDate(entry.date),
     [labels.type]: entry.type === "in" ? labels.incoming : labels.outgoing,

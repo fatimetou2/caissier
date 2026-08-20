@@ -4,13 +4,11 @@ import { isCancelled } from "../utils/calculations";
 import {
   formatDateTime,
   formatDisplayDate,
-  formatMoney,
   formatSignedAmount,
 } from "../utils/formatters";
 
 interface EntryTableProps {
   entries: CashEntry[];
-  runningBalances: Map<string, number>;
   onEdit: (entry: CashEntry) => void;
   onCancelEntry: (entry: CashEntry) => void;
   onDeleteEntry: (entry: CashEntry) => void;
@@ -18,7 +16,6 @@ interface EntryTableProps {
 
 export function EntryTable({
   entries,
-  runningBalances,
   onEdit,
   onCancelEntry,
   onDeleteEntry,
@@ -27,7 +24,7 @@ export function EntryTable({
 
   return (
     <div className="overflow-x-auto rounded-xl border border-ledger-line bg-ledger-paper shadow-sm">
-      <table className="w-full min-w-[760px] text-start text-sm">
+      <table className="w-full min-w-[680px] text-start text-sm">
         <thead className="bg-ledger-bg text-sm text-ledger-muted">
           <tr>
             <th className="px-4 py-3 font-semibold">{t("date")}</th>
@@ -35,7 +32,6 @@ export function EntryTable({
             <th className="px-4 py-3 font-semibold">{t("amount")}</th>
             <th className="px-4 py-3 font-semibold">{t("party")}</th>
             <th className="px-4 py-3 font-semibold">{t("reason")}</th>
-            <th className="px-4 py-3 font-semibold">{t("runningBalance")}</th>
             <th className="px-4 py-3 font-semibold">{t("actions")}</th>
           </tr>
         </thead>
@@ -99,9 +95,6 @@ export function EntryTable({
                 </td>
                 <td className="px-4 py-3">{entry.party || "—"}</td>
                 <td className="px-4 py-3">{entry.reason || "—"}</td>
-                <td className="px-4 py-3 font-semibold text-ledger-ink" dir="ltr">
-                  {formatMoney(runningBalances.get(entry.id) ?? 0)}
-                </td>
                 <td className="px-4 py-3">
                   <div className="flex flex-wrap items-center gap-2">
                     {cancelled ? (

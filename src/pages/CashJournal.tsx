@@ -21,7 +21,6 @@ import type { CashEntry, CashEntryInput, EntryFilter } from "../types/cashEntry"
 import {
   calculateCurrentBalance,
   calculateDayTotals,
-  calculateRunningBalances,
   filterByDate,
   filterByStatus,
   isCancelled,
@@ -85,10 +84,6 @@ export function CashJournal() {
   );
   const currentBalance = useMemo(
     () => calculateCurrentBalance(entries),
-    [entries],
-  );
-  const runningBalances = useMemo(
-    () => calculateRunningBalances(entries),
     [entries],
   );
 
@@ -293,7 +288,6 @@ export function CashJournal() {
             ) : (
               <EntryTable
                 entries={visibleDayEntries}
-                runningBalances={runningBalances}
                 onEdit={openEditForm}
                 onCancelEntry={setCancellingEntry}
                 onDeleteEntry={setDeletingEntry}

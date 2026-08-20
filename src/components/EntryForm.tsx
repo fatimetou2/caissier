@@ -172,16 +172,6 @@ export function EntryForm({
               className="rounded-lg border border-ledger-line px-3 py-2 font-normal"
             />
           </label>
-
-          <label className="grid gap-1 text-sm font-semibold text-ledger-ink">
-            {t("notes")}
-            <textarea
-              value={notes}
-              onChange={(event) => setNotes(event.target.value)}
-              rows={3}
-              className="rounded-lg border border-ledger-line px-3 py-2 font-normal"
-            />
-          </label>
         </div>
 
         {error && (

@@ -4,13 +4,11 @@ import { isCancelled } from "../utils/calculations";
 import {
   formatDateTime,
   formatLongDate,
-  formatMoney,
   formatSignedAmount,
 } from "../utils/formatters";
 
 interface EntryCardProps {
   entry: CashEntry;
-  runningBalance: number;
   onEdit: (entry: CashEntry) => void;
   onCancelEntry: (entry: CashEntry) => void;
   onDeleteEntry: (entry: CashEntry) => void;
@@ -18,7 +16,6 @@ interface EntryCardProps {
 
 export function EntryCard({
   entry,
-  runningBalance,
   onEdit,
   onCancelEntry,
   onDeleteEntry,
@@ -103,12 +100,6 @@ export function EntryCard({
             </dd>
           </div>
         )}
-        <div className="flex justify-between gap-3">
-          <dt className="text-ledger-muted">{t("balance")}</dt>
-          <dd className="font-bold text-ledger-ink" dir="ltr">
-            {formatMoney(runningBalance)}
-          </dd>
-        </div>
       </dl>
 
       <div className="mt-4 flex gap-2 border-t border-ledger-line pt-3">

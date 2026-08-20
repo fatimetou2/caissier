@@ -90,3 +90,11 @@ export function filterByStatus(
   if (filter === "cancelled") return entries.filter(isCancelled);
   return entries;
 }
+
+export function filterByType(
+  entries: CashEntry[],
+  type: "all" | "in" | "out",
+): CashEntry[] {
+  if (type === "all") return entries;
+  return entries.filter((entry) => entry.type === type);
+}

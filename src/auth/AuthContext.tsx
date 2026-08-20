@@ -8,17 +8,30 @@ import {
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
-import { ADMIN_EMAIL } from "./constants";
+import {
+  getRoleForEmail,
+  isAllowedEmail,
+  normalizeEmail,
+  type UserRole,
+} from "./constants";
 
 interface AuthContextValue {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  role: UserRole | null;
+  isAdmin: boolean;
+  canManage: boolean;
+  canAdd: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
+
+function sessionIsAllowed(session: Session | null): session is Session {
+  return Boolean(session?.user.email && isAllowedEmail(session.user.email));
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -28,7 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async function loadSession() {
       const { data } = await supabase.auth.getSession();
       const next = data.session;
-      if (next?.user.email?.toLowerCase() !== ADMIN_EMAIL) {
+      if (!sessionIsAllowed(next)) {
         if (next) await supabase.auth.signOut();
         setSession(null);
       } else {
@@ -40,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void loadSession();
 
     const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      if (nextSession?.user.email?.toLowerCase() !== ADMIN_EMAIL) {
+      if (!sessionIsAllowed(nextSession)) {
         setSession(null);
         return;
       }
@@ -50,17 +63,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => data.subscription.unsubscribe();
   }, []);
 
+  const role = getRoleForEmail(session?.user.email);
+  const isAdmin = role === "admin";
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user: session?.user ?? null,
       session,
       loading,
+      role,
+      isAdmin,
+      canManage: isAdmin,
+      canAdd: role === "admin" || role === "user",
       signIn: async (email, password) => {
-        if (email.trim().toLowerCase() !== ADMIN_EMAIL) {
+        const normalized = normalizeEmail(email);
+        if (!isAllowedEmail(normalized)) {
           throw new Error("unauthorized");
         }
         const { error } = await supabase.auth.signInWithPassword({
-          email: ADMIN_EMAIL,
+          email: normalized,
           password,
         });
         if (error) throw error;
@@ -70,7 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (error) throw error;
       },
     }),
-    [loading, session],
+    [isAdmin, loading, role, session],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

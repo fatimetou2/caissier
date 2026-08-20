@@ -14,9 +14,14 @@ import {
 interface MonthlySummaryProps {
   entries: CashEntry[];
   onExported: () => void;
+  onExportEmpty?: () => void;
 }
 
-export function MonthlySummary({ entries, onExported }: MonthlySummaryProps) {
+export function MonthlySummary({
+  entries,
+  onExported,
+  onExportEmpty,
+}: MonthlySummaryProps) {
   const { t, language } = useLanguage();
   const today = parseISODate(todayISO());
   const [year, setYear] = useState(today.year);
@@ -41,7 +46,7 @@ export function MonthlySummary({ entries, onExported }: MonthlySummaryProps) {
   }, [entries, today.year]);
 
   function handleExport() {
-    exportEntriesToExcel(
+    const ok = exportEntriesToExcel(
       monthEntries,
       {
         date: t("date"),
@@ -49,17 +54,33 @@ export function MonthlySummary({ entries, onExported }: MonthlySummaryProps) {
         amount: t("amount"),
         party: t("party"),
         reason: t("reason"),
-        notes: t("notes"),
-        runningBalance: t("runningBalance"),
         incoming: t("incoming"),
         outgoing: t("outgoing"),
         status: t("status"),
         statusActive: t("statusActive"),
         statusCancelled: t("statusCancelled"),
-        voidReason: t("voidReason"),
+        summary: t("exportSummary"),
+        entries: t("exportEntries"),
+        label: t("exportLabel"),
+        value: t("exportValue"),
+        totalIn: t("totalIn"),
+        totalOut: t("totalOut"),
+        netMovement: t("netMovement"),
+        activeCount: t("exportActiveCount"),
+        cancelledCount: t("exportCancelledCount"),
+        currency: t("currency"),
+        period: t("exportPeriod"),
       },
-      `caisse-${year}-${String(month).padStart(2, "0")}.xlsx`,
+      {
+        title: t("exportEntries"),
+        period: formatMonthTitle(year, month, language),
+        filename: `caisse-${year}-${String(month).padStart(2, "0")}.xlsx`,
+      },
     );
+    if (!ok) {
+      onExportEmpty?.();
+      return;
+    }
     onExported();
   }
 

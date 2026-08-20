@@ -9,6 +9,7 @@ import {
 
 interface EntryTableProps {
   entries: CashEntry[];
+  canManage?: boolean;
   onEdit: (entry: CashEntry) => void;
   onCancelEntry: (entry: CashEntry) => void;
   onDeleteEntry: (entry: CashEntry) => void;
@@ -16,6 +17,7 @@ interface EntryTableProps {
 
 export function EntryTable({
   entries,
+  canManage = false,
   onEdit,
   onCancelEntry,
   onDeleteEntry,
@@ -30,9 +32,11 @@ export function EntryTable({
             <th className="px-4 py-3 font-semibold">{t("date")}</th>
             <th className="px-4 py-3 font-semibold">{t("type")}</th>
             <th className="px-4 py-3 font-semibold">{t("amount")}</th>
-            <th className="px-4 py-3 font-semibold">{t("party")}</th>
             <th className="px-4 py-3 font-semibold">{t("reason")}</th>
-            <th className="px-4 py-3 font-semibold">{t("actions")}</th>
+            <th className="px-4 py-3 font-semibold">{t("party")}</th>
+            {canManage && (
+              <th className="px-4 py-3 font-semibold">{t("actions")}</th>
+            )}
           </tr>
         </thead>
         <tbody>
@@ -93,43 +97,45 @@ export function EntryTable({
                     entry.type === "in" ? entry.amount : -entry.amount,
                   )}
                 </td>
-                <td className="px-4 py-3">{entry.party || "—"}</td>
                 <td className="px-4 py-3">{entry.reason || "—"}</td>
-                <td className="px-4 py-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    {cancelled ? (
-                      <>
-                        <span className="rounded-full bg-ledger-out px-2 py-1 text-xs font-bold text-white">
-                          {t("statusCancelled")}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => onDeleteEntry(entry)}
-                          className="rounded-lg bg-ledger-out px-3 py-1.5 text-sm font-bold text-white"
-                        >
-                          {t("delete")}
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => onEdit(entry)}
-                          className="text-sm font-semibold text-ledger-ink hover:underline"
-                        >
-                          {t("edit")}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => onCancelEntry(entry)}
-                          className="text-sm font-semibold text-ledger-out hover:underline"
-                        >
-                          {t("voidEntry")}
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </td>
+                <td className="px-4 py-3">{entry.party || "—"}</td>
+                {canManage && (
+                  <td className="px-4 py-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {cancelled ? (
+                        <>
+                          <span className="rounded-full bg-ledger-out px-2 py-1 text-xs font-bold text-white">
+                            {t("statusCancelled")}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => onDeleteEntry(entry)}
+                            className="rounded-lg bg-ledger-out px-3 py-1.5 text-sm font-bold text-white"
+                          >
+                            {t("delete")}
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => onEdit(entry)}
+                            className="text-sm font-semibold text-ledger-ink hover:underline"
+                          >
+                            {t("edit")}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onCancelEntry(entry)}
+                            className="text-sm font-semibold text-ledger-out hover:underline"
+                          >
+                            {t("voidEntry")}
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </td>
+                )}
               </tr>
             );
           })}

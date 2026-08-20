@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { BalanceCard } from "../components/BalanceCard";
+import { useAuth } from "../auth/AuthContext";
+import { BalanceCard, type BalanceTypeFilter } from "../components/BalanceCard";
 import { CancelDialog } from "../components/CancelDialog";
 import { DailyNavigation } from "../components/DailyNavigation";
 import { DeleteDialog } from "../components/DeleteDialog";
@@ -23,6 +24,7 @@ import {
   calculateDayTotals,
   filterByDate,
   filterByStatus,
+  filterByType,
   isCancelled,
 } from "../utils/calculations";
 import { exportEntriesToExcel } from "../utils/excelExport";
@@ -32,6 +34,7 @@ type View = "daily" | "monthly";
 
 export function CashJournal() {
   const { t } = useLanguage();
+  const { canManage, canAdd } = useAuth();
   const [view, setView] = useState<View>("daily");
   const [selectedDate, setSelectedDate] = useState(todayISO);
   const [entries, setEntries] = useState<CashEntry[]>([]);
@@ -45,6 +48,7 @@ export function CashJournal() {
   const [deletingEntry, setDeletingEntry] = useState<CashEntry | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [statusFilter, setStatusFilter] = useState<EntryFilter>("active");
+  const [typeFilter, setTypeFilter] = useState<BalanceTypeFilter>("all");
 
   const loadEntries = useCallback(async () => {
     setError("");
@@ -75,8 +79,8 @@ export function CashJournal() {
     [entries, selectedDate],
   );
   const visibleDayEntries = useMemo(
-    () => filterByStatus(dayEntries, statusFilter),
-    [dayEntries, statusFilter],
+    () => filterByType(filterByStatus(dayEntries, statusFilter), typeFilter),
+    [dayEntries, statusFilter, typeFilter],
   );
   const dayTotals = useMemo(
     () => calculateDayTotals(dayEntries),
@@ -93,27 +97,47 @@ export function CashJournal() {
     amount: t("amount"),
     party: t("party"),
     reason: t("reason"),
-    notes: t("notes"),
-    runningBalance: t("runningBalance"),
     incoming: t("incoming"),
     outgoing: t("outgoing"),
     status: t("status"),
     statusActive: t("statusActive"),
     statusCancelled: t("statusCancelled"),
-    voidReason: t("voidReason"),
+    summary: t("exportSummary"),
+    entries: t("exportEntries"),
+    label: t("exportLabel"),
+    value: t("exportValue"),
+    totalIn: t("totalIn"),
+    totalOut: t("totalOut"),
+    netMovement: t("netMovement"),
+    activeCount: t("exportActiveCount"),
+    cancelledCount: t("exportCancelledCount"),
+    currency: t("currency"),
+    period: t("exportPeriod"),
   };
 
   function exportDay() {
-    exportEntriesToExcel(
-      visibleDayEntries,
-      excelLabels,
-      `caisse-${selectedDate}.xlsx`,
-    );
+    const ok = exportEntriesToExcel(visibleDayEntries, excelLabels, {
+      title: t("exportEntries"),
+      period: selectedDate,
+      filename: `caisse-${selectedDate}.xlsx`,
+    });
+    if (!ok) {
+      setError(t("exportEmpty"));
+      return;
+    }
     setMessage(t("exported"));
   }
 
   function exportAll() {
-    exportEntriesToExcel(entries, excelLabels, "caisse-complet.xlsx");
+    const ok = exportEntriesToExcel(entries, excelLabels, {
+      title: t("exportEntries"),
+      period: t("exportAll"),
+      filename: `caisse-complet.xlsx`,
+    });
+    if (!ok) {
+      setError(t("exportEmpty"));
+      return;
+    }
     setMessage(t("exported"));
   }
 
@@ -123,19 +147,21 @@ export function CashJournal() {
   }
 
   function openEditForm(entry: CashEntry) {
-    if (isCancelled(entry)) return;
+    if (!canManage || isCancelled(entry)) return;
     setEditingEntry(entry);
     setFormOpen(true);
   }
 
   async function handleSave(input: CashEntryInput) {
     if (editingEntry) {
+      if (!canManage) return;
       await updateEntry(editingEntry.id, input);
       await loadEntries();
       setMessage(t("updatedSuccess"));
       return;
     }
 
+    if (!canAdd) return;
     await createEntry(input);
     await loadEntries();
     setSelectedDate(input.date);
@@ -143,7 +169,7 @@ export function CashJournal() {
   }
 
   async function handleCancel(reason: string) {
-    if (!cancellingEntry) return;
+    if (!canManage || !cancellingEntry) return;
     setCancelling(true);
     try {
       await cancelEntry(cancellingEntry.id, reason);
@@ -159,7 +185,7 @@ export function CashJournal() {
   }
 
   async function handleDelete() {
-    if (!deletingEntry || !isCancelled(deletingEntry)) return;
+    if (!canManage || !deletingEntry || !isCancelled(deletingEntry)) return;
     setDeleting(true);
     try {
       await deleteEntry(deletingEntry.id);
@@ -211,6 +237,7 @@ export function CashJournal() {
           <MonthlySummary
             entries={entries}
             onExported={() => setMessage(t("exported"))}
+            onExportEmpty={() => setError(t("exportEmpty"))}
           />
         ) : (
           <>
@@ -222,6 +249,8 @@ export function CashJournal() {
               currentBalance={currentBalance}
               dayIncome={dayTotals.income}
               dayExpense={dayTotals.expense}
+              typeFilter={typeFilter}
+              onTypeFilterChange={setTypeFilter}
             />
 
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -243,13 +272,15 @@ export function CashJournal() {
                 >
                   {t("exportAll")}
                 </button>
-                <button
-                  type="button"
-                  onClick={openAddForm}
-                  className="rounded-lg bg-ledger-ink px-4 py-2 text-sm font-bold text-white"
-                >
-                  {t("addEntry")}
-                </button>
+                {canAdd && (
+                  <button
+                    type="button"
+                    onClick={openAddForm}
+                    className="rounded-lg bg-ledger-ink px-4 py-2 text-sm font-bold text-white"
+                  >
+                    {t("addEntry")}
+                  </button>
+                )}
               </div>
             </div>
 
@@ -277,17 +308,20 @@ export function CashJournal() {
             ) : visibleDayEntries.length === 0 ? (
               <div className="rounded-xl border border-dashed border-ledger-line bg-ledger-paper p-8 text-center">
                 <p className="font-semibold text-ledger-ink">{t("noEntries")}</p>
-                <button
-                  type="button"
-                  onClick={openAddForm}
-                  className="mt-4 rounded-lg bg-ledger-ink px-4 py-2 text-sm font-bold text-white"
-                >
-                  {t("addEntry")}
-                </button>
+                {canAdd && (
+                  <button
+                    type="button"
+                    onClick={openAddForm}
+                    className="mt-4 rounded-lg bg-ledger-ink px-4 py-2 text-sm font-bold text-white"
+                  >
+                    {t("addEntry")}
+                  </button>
+                )}
               </div>
             ) : (
               <EntryTable
                 entries={visibleDayEntries}
+                canManage={canManage}
                 onEdit={openEditForm}
                 onCancelEntry={setCancellingEntry}
                 onDeleteEntry={setDeletingEntry}

@@ -154,21 +154,21 @@ export function EntryForm({
           </label>
 
           <label className="grid gap-1 text-sm font-semibold text-ledger-ink">
-            {t("party")}
-            <input
-              type="text"
-              value={party}
-              onChange={(event) => setParty(event.target.value)}
-              className="rounded-lg border border-ledger-line px-3 py-2 font-normal"
-            />
-          </label>
-
-          <label className="grid gap-1 text-sm font-semibold text-ledger-ink">
             {t("reason")}
             <input
               type="text"
               value={reason}
               onChange={(event) => setReason(event.target.value)}
+              className="rounded-lg border border-ledger-line px-3 py-2 font-normal"
+            />
+          </label>
+
+          <label className="grid gap-1 text-sm font-semibold text-ledger-ink">
+            {t("party")}
+            <input
+              type="text"
+              value={party}
+              onChange={(event) => setParty(event.target.value)}
               className="rounded-lg border border-ledger-line px-3 py-2 font-normal"
             />
           </label>

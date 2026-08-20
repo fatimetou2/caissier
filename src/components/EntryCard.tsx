@@ -9,6 +9,7 @@ import {
 
 interface EntryCardProps {
   entry: CashEntry;
+  canManage?: boolean;
   onEdit: (entry: CashEntry) => void;
   onCancelEntry: (entry: CashEntry) => void;
   onDeleteEntry: (entry: CashEntry) => void;
@@ -16,6 +17,7 @@ interface EntryCardProps {
 
 export function EntryCard({
   entry,
+  canManage = false,
   onEdit,
   onCancelEntry,
   onDeleteEntry,
@@ -73,12 +75,12 @@ export function EntryCard({
 
       <dl className="mt-4 grid gap-1 text-sm">
         <div className="flex justify-between gap-3">
-          <dt className="text-ledger-muted">{t("party")}</dt>
-          <dd className="font-semibold text-ledger-ink">{entry.party || "—"}</dd>
-        </div>
-        <div className="flex justify-between gap-3">
           <dt className="text-ledger-muted">{t("reason")}</dt>
           <dd className="font-semibold text-ledger-ink">{entry.reason || "—"}</dd>
+        </div>
+        <div className="flex justify-between gap-3">
+          <dt className="text-ledger-muted">{t("party")}</dt>
+          <dd className="font-semibold text-ledger-ink">{entry.party || "—"}</dd>
         </div>
         {entry.notes && (
           <div className="flex justify-between gap-3">
@@ -102,34 +104,36 @@ export function EntryCard({
         )}
       </dl>
 
-      <div className="mt-4 flex gap-2 border-t border-ledger-line pt-3">
-        {cancelled ? (
-          <button
-            type="button"
-            onClick={() => onDeleteEntry(entry)}
-            className="flex-1 rounded-lg bg-ledger-out px-3 py-2 text-sm font-bold text-white"
-          >
-            {t("delete")}
-          </button>
-        ) : (
-          <>
+      {canManage && (
+        <div className="mt-4 flex gap-2 border-t border-ledger-line pt-3">
+          {cancelled ? (
             <button
               type="button"
-              onClick={() => onEdit(entry)}
-              className="flex-1 rounded-lg border border-ledger-line px-3 py-2 text-sm font-semibold"
+              onClick={() => onDeleteEntry(entry)}
+              className="flex-1 rounded-lg bg-ledger-out px-3 py-2 text-sm font-bold text-white"
             >
-              {t("edit")}
+              {t("delete")}
             </button>
-            <button
-              type="button"
-              onClick={() => onCancelEntry(entry)}
-              className="flex-1 rounded-lg border border-ledger-out-soft bg-ledger-out-soft px-3 py-2 text-sm font-semibold text-ledger-out"
-            >
-              {t("voidEntry")}
-            </button>
-          </>
-        )}
-      </div>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => onEdit(entry)}
+                className="flex-1 rounded-lg border border-ledger-line px-3 py-2 text-sm font-semibold"
+              >
+                {t("edit")}
+              </button>
+              <button
+                type="button"
+                onClick={() => onCancelEntry(entry)}
+                className="flex-1 rounded-lg border border-ledger-out-soft bg-ledger-out-soft px-3 py-2 text-sm font-semibold text-ledger-out"
+              >
+                {t("voidEntry")}
+              </button>
+            </>
+          )}
+        </div>
+      )}
     </article>
   );
 }

@@ -11,7 +11,7 @@ interface HeaderProps {
 
 export function Header({ currentView, onChangeView }: HeaderProps) {
   const { t } = useLanguage();
-  const { signOut, user } = useAuth();
+  const { signOut, user, role } = useAuth();
 
   return (
     <header className="sticky top-0 z-20 border-b border-ledger-line bg-ledger-paper">
@@ -27,6 +27,7 @@ export function Header({ currentView, onChangeView }: HeaderProps) {
             {user?.email && (
               <p className="mt-0.5 truncate text-xs text-ledger-muted" dir="ltr">
                 {user.email}
+                {role ? ` · ${role === "admin" ? t("roleAdmin") : t("roleUser")}` : ""}
               </p>
             )}
           </div>

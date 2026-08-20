@@ -1,5 +1,4 @@
 import { useState, type FormEvent } from "react";
-import { ADMIN_EMAIL } from "../auth/constants";
 import { useAuth } from "../auth/AuthContext";
 import { LanguageSwitch } from "../components/LanguageSwitch";
 import { useLanguage } from "../i18n/LanguageContext";
@@ -7,12 +6,17 @@ import { useLanguage } from "../i18n/LanguageContext";
 export function Login() {
   const { t } = useLanguage();
   const { signIn } = useAuth();
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
   async function handleLogin(event: FormEvent) {
     event.preventDefault();
+    if (!email.trim()) {
+      setError(t("emailRequired"));
+      return;
+    }
     if (password.length < 6) {
       setError(t("passwordMin"));
       return;
@@ -20,7 +24,7 @@ export function Login() {
     setBusy(true);
     setError("");
     try {
-      await signIn(ADMIN_EMAIL, password);
+      await signIn(email, password);
     } catch {
       setError(t("loginFailed"));
       setBusy(false);
@@ -46,10 +50,12 @@ export function Login() {
           {t("email")}
           <input
             type="email"
-            value={ADMIN_EMAIL}
-            readOnly
-            className="rounded-lg border border-ledger-line bg-ledger-bg px-3 py-2 font-normal"
+            required
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            className="rounded-lg border border-ledger-line px-3 py-2 font-normal"
             dir="ltr"
+            autoComplete="username"
           />
         </label>
 
